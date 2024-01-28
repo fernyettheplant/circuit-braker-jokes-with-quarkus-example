@@ -10,7 +10,8 @@ import org.eclipse.microprofile.faulttolerance.FallbackHandler;
 public class KafkaJokeEventCircuitBreakerFallback implements FallbackHandler<Void> {
     private final JokeEventService redisJokeEventService;
 
-    public KafkaJokeEventCircuitBreakerFallback(@Named("RedisJokeEventService") JokeEventService redisJokeEventService) {
+    public KafkaJokeEventCircuitBreakerFallback(
+            @Named("RedisJokeEventService") JokeEventService redisJokeEventService) {
         this.redisJokeEventService = redisJokeEventService;
     }
 

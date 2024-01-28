@@ -1,4 +1,3 @@
 package dev.fernyettheplant.application.service.sendjokeforcreation.command;
 
-public record SendJokeForCreationCommand(String jokeText) {
-}
+public record SendJokeForCreationCommand(String jokeText) {}

@@ -10,4 +10,4 @@ pluginManagement {
         id(quarkusPluginId) version quarkusPluginVersion
     }
 }
-rootProject.name="token-exchange-fern"
+rootProject.name = "token-exchange-fern"
