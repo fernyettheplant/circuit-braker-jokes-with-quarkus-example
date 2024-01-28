@@ -33,22 +33,21 @@ public class KafkaJokeEventService implements JokeEventService {
     private final ObjectMapper objectMapper;
 
     public KafkaJokeEventService(
-            @Channel("joke-ingested") Emitter<byte[]> cloudEventEmitter, ObjectMapper objectMapper) {
+            @Channel("joke-ingested-out") Emitter<byte[]> cloudEventEmitter, ObjectMapper objectMapper) {
         this.cloudEventEmitter = cloudEventEmitter;
         this.objectMapper = objectMapper;
     }
 
     @Override
     @CircuitBreaker(
-            requestVolumeThreshold = 6,
-            failureRatio = .5,
+            requestVolumeThreshold = 6, // Latest 6
+            failureRatio = .5, // 50% Failure Rate
             delay = 10000 // 10 Secs
             )
     @Fallback(KafkaJokeEventCircuitBreakerFallback.class)
     public void sendForCreation(Joke joke) {
         try {
             JokeIngested jokeIngestedEvent = new JokeIngested(joke.id().toString(), joke.text());
-
             CloudEventData eventData = PojoCloudEventData.wrap(jokeIngestedEvent, objectMapper::writeValueAsBytes);
 
             CloudEvent cloudEvent = new CloudEventBuilder()
@@ -56,6 +55,7 @@ public class KafkaJokeEventService implements JokeEventService {
                     .withTime(Instant.now().atOffset(UTC))
                     .withSource(URI.create("fernyettheplant.dev"))
                     .withType("dev.fernyettheplant.joke.ingested")
+                    .withSubject("joke")
                     .withData("application/json", eventData)
                     .build();
 
@@ -64,7 +64,7 @@ public class KafkaJokeEventService implements JokeEventService {
             byte[] serialized = format.serialize(cloudEvent);
             this.cloudEventEmitter.send(serialized);
         } catch (Exception e) {
-            log.error("error", e);
+            log.error("An error occurred sending event in Kafka", e);
             throw new RuntimeException(e);
         }
     }
