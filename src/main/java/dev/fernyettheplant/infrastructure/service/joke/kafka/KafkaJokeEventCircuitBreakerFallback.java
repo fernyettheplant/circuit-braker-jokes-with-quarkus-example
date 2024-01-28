@@ -1,5 +1,6 @@
 package dev.fernyettheplant.infrastructure.service.joke.kafka;
 
+import dev.fernyettheplant.domain.model.Joke;
 import dev.fernyettheplant.domain.service.joke.JokeEventService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
@@ -17,7 +18,8 @@ public class KafkaJokeEventCircuitBreakerFallback implements FallbackHandler<Voi
 
     @Override
     public Void handle(ExecutionContext executionContext) {
-        redisJokeEventService.sendForCreation(null);
+        Joke joke = (Joke) executionContext.getParameters()[0];
+        redisJokeEventService.sendForCreation(joke);
         return null;
     }
 }
