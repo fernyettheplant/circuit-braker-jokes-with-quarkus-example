@@ -14,7 +14,6 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
-    implementation("io.quarkus:quarkus-smallrye-fault-tolerance")
     // BOM
     implementation(platform("io.cloudevents:cloudevents-bom:2.5.0"))
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
@@ -24,6 +23,7 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("io.quarkus:quarkus-resteasy-reactive")
     implementation("io.quarkus:quarkus-redis-client")
+    implementation("io.quarkus:quarkus-smallrye-fault-tolerance")
 
     // Cloud Events
     implementation("io.cloudevents:cloudevents-core")
