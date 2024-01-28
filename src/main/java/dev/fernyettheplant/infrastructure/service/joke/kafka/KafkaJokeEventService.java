@@ -2,13 +2,20 @@ package dev.fernyettheplant.infrastructure.service.joke.kafka;
 
 import static java.time.ZoneOffset.UTC;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.fernyettheplant.domain.model.Joke;
 import dev.fernyettheplant.domain.service.joke.JokeEventService;
+import dev.fernyettheplant.infrastructure.service.joke.events.JokeIngested;
 import io.cloudevents.CloudEvent;
+import io.cloudevents.CloudEventData;
+import io.cloudevents.core.data.PojoCloudEventData;
+import io.cloudevents.core.format.EventFormat;
+import io.cloudevents.core.provider.EventFormatProvider;
 import io.cloudevents.core.v1.CloudEventBuilder;
+import io.cloudevents.jackson.JsonFormat;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.time.Instant;
 import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
 import org.eclipse.microprofile.faulttolerance.Fallback;
@@ -23,8 +30,12 @@ public class KafkaJokeEventService implements JokeEventService {
 
     private final Emitter<byte[]> cloudEventEmitter;
 
-    public KafkaJokeEventService(@Channel("joke-ingested") Emitter<byte[]> cloudEventEmitter) {
+    private final ObjectMapper objectMapper;
+
+    public KafkaJokeEventService(
+            @Channel("joke-ingested") Emitter<byte[]> cloudEventEmitter, ObjectMapper objectMapper) {
         this.cloudEventEmitter = cloudEventEmitter;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -35,11 +46,26 @@ public class KafkaJokeEventService implements JokeEventService {
             )
     @Fallback(KafkaJokeEventCircuitBreakerFallback.class)
     public void sendForCreation(Joke joke) {
-        CloudEvent cloudEvent = new CloudEventBuilder()
-                .withId(joke.id().toString())
-                .withTime(Instant.now().atOffset(UTC))
-                .build();
+        try {
+            JokeIngested jokeIngestedEvent = new JokeIngested(joke.id().toString(), joke.text());
 
-        this.cloudEventEmitter.send(cloudEvent.toString().getBytes(StandardCharsets.UTF_8));
+            CloudEventData eventData = PojoCloudEventData.wrap(jokeIngestedEvent, objectMapper::writeValueAsBytes);
+
+            CloudEvent cloudEvent = new CloudEventBuilder()
+                    .withId(joke.id().toString())
+                    .withTime(Instant.now().atOffset(UTC))
+                    .withSource(URI.create("fernyettheplant.dev"))
+                    .withType("dev.fernyettheplant.joke.ingested")
+                    .withData("application/json", eventData)
+                    .build();
+
+            EventFormat format = EventFormatProvider.getInstance().resolveFormat(JsonFormat.CONTENT_TYPE);
+
+            byte[] serialized = format.serialize(cloudEvent);
+            this.cloudEventEmitter.send(serialized);
+        } catch (Exception e) {
+            log.error("error", e);
+            throw new RuntimeException(e);
+        }
     }
 }

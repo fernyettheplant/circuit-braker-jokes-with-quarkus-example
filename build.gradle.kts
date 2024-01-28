@@ -25,10 +25,11 @@ dependencies {
     implementation("io.quarkus:quarkus-redis-client")
     implementation("io.quarkus:quarkus-smallrye-fault-tolerance")
     implementation("io.quarkus:quarkus-smallrye-reactive-messaging-kafka")
+    implementation("io.quarkus:quarkus-jackson")
 
     // Cloud Events
-    implementation("io.cloudevents:cloudevents-core")
     implementation("io.cloudevents:cloudevents-api")
+    implementation("io.cloudevents:cloudevents-core")
     implementation("io.cloudevents:cloudevents-json-jackson")
 
     testImplementation("io.quarkus:quarkus-junit5")
