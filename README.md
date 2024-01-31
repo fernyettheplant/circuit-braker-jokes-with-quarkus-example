@@ -1,4 +1,4 @@
-# token-exchange-fern
+# circuit-braker-jokes-with-quarkus-example
 
 This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
